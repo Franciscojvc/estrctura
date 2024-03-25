@@ -1,0 +1,141 @@
+#include <iostream>
+#include<malloc.h>
+using namespace std;
+
+struct Cliente {
+    char nombre[100];
+    int numerocuenta;
+    int TipoCuenta;
+    Cliente* sig;
+};
+
+Cliente* Tradicional = NULL;
+Cliente* Preferencial = NULL;
+
+void registrar() {
+    Cliente* nuevoCliente = (Cliente*)malloc(sizeof(Cliente));
+    if (nuevoCliente == NULL) {
+        cout << "error no se pudo asignar memoria para el nuevo cliente." << endl;
+        return;
+    }
+    cout <<endl<< "Ingrese su nombre: ";
+    cin.ignore();
+    cin.getline(nuevoCliente->nombre, 100, '\n');
+    cout << "Ingrese su numero de cuenta: ";
+    cin >> nuevoCliente->numerocuenta;
+    cin.ignore(); 
+    do {
+        cout << "Ingrese su tipo de cuenta (1 para Preferencial, 2 para Tradicional): ";
+        cin >> nuevoCliente->TipoCuenta;
+    } while (nuevoCliente->TipoCuenta < 1 || nuevoCliente->TipoCuenta > 2);
+
+
+    nuevoCliente->sig = NULL;
+
+ 
+    if (nuevoCliente->TipoCuenta == 1) {
+        if (Preferencial == NULL) {
+            Preferencial = nuevoCliente;
+        } else {
+            Cliente* temp = Preferencial;
+            while (temp->sig != NULL) {
+                temp = temp->sig;
+            }
+            temp->sig = nuevoCliente;
+        }
+    } else { 
+        if (Tradicional == NULL) {
+            Tradicional = nuevoCliente;
+        } else {
+            Cliente* temp = Tradicional;
+            while (temp->sig != NULL) {
+                temp = temp->sig;
+            }
+            temp->sig = nuevoCliente;
+        }
+    }
+
+    if (Tradicional != NULL && Preferencial != NULL) {
+        int Trad= 0,Pref= 0;
+        Cliente* temp = Tradicional;
+        while (temp != NULL) {
+            Trad++;
+            temp = temp->sig;
+        }
+        temp = Preferencial;
+        while (temp != NULL) {
+            Pref++;
+            temp = temp->sig;
+        }
+        if (Trad >= 5 && Pref <= 2) {
+            Cliente* tercero = Tradicional->sig->sig;
+            Tradicional->sig->sig = tercero->sig;
+            tercero->sig = NULL;
+            Cliente* tempPref = Preferencial;
+            while (tempPref->sig != NULL) {
+                tempPref = tempPref->sig;
+            }
+            tempPref->sig = tercero;
+        }
+    }
+}
+
+void mostrarfilas() {
+    cout << "Fila de clientes preferenciales:" << endl;
+    int preferen = 1;
+    Cliente* aux1 = Preferencial;
+    while (aux1 != NULL) {
+        cout << preferen << ". " << aux1->nombre << " - Cuenta: " << aux1->numerocuenta << endl;
+        preferen++;
+        aux1 = aux1->sig;
+    }
+
+    cout << endl << "Fila de clientes tradicionales:" << endl;
+    int tradi = 1;
+    Cliente* aux2 = Tradicional;
+    while (aux2 != NULL) {
+        cout << tradi << ". " << aux2->nombre << " - Cuenta: " << aux2->numerocuenta << endl;
+        tradi++;
+        aux2 = aux2->sig;
+    }
+}
+
+int main() {
+    int opcion;
+    do {
+        cout << endl << "Menu:" << endl;
+        cout << "1. Registrar Cliente" << endl;
+        cout << "2. Mostrar Filas" << endl;
+        cout << "3. Salir" << endl;
+        cout << "Ingrese su opcion: ";
+        cin >> opcion;
+
+        switch (opcion) {
+            case 1:
+                registrar();
+                break;
+            case 2:
+                mostrarfilas();
+                break;
+            case 3:
+                cout << "saliendo...." << endl;
+                break;
+            default:
+                cout << "opcion incorrecta. Por favor ingrese una opción válida." << endl;
+        }
+    } while (opcion != 3);
+
+    Cliente* aux;
+    while (Tradicional != NULL) {
+        aux = Tradicional;
+        Tradicional = Tradicional->sig;
+        free(aux);
+    }
+    while (Preferencial != NULL) {
+        aux = Preferencial;
+        Preferencial = Preferencial->sig;
+        free(aux);
+    }
+
+    return 0;
+}
