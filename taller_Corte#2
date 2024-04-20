@@ -1,0 +1,206 @@
+#include <iostream>
+#include <malloc.h>
+using namespace std;
+
+struct Vehiculo {
+    int placa;
+    int tipoVehiculo;
+    int precioParqueo;
+    int precioMovimiento;
+    Vehiculo *siguienteCarro;
+    Vehiculo *siguienteMoto;
+};
+Vehiculo *topCarro = NULL;
+Vehiculo *topMoto= NULL;
+
+int ingresarVehiculo() {
+    Vehiculo *aux = (struct Vehiculo *)malloc(sizeof(struct Vehiculo));
+    cout << "digite la placa del vehiculo: ";
+    cin >> aux->placa;
+    do {
+        cout << "seleccione el tipo de vehiculo: " << endl
+             << "1. Carro" << endl
+             << "2. Moto" << endl;
+        cin >> aux->tipoVehiculo;
+        if (aux->tipoVehiculo != 1 && aux->tipoVehiculo != 2) {
+            cout << "tipo de vehiculo no valido" << endl;
+        }
+    } while (aux->tipoVehiculo != 1 && aux->tipoVehiculo != 2);
+    if (aux->tipoVehiculo==1) {
+        aux->precioParqueo=5000; 
+        aux->precioMovimiento=1000; 
+        aux->siguienteCarro=topCarro;
+        topCarro = aux;
+    } else {
+        aux->precioParqueo=2500; 
+        aux->precioMovimiento=500;
+        aux->siguienteMoto=topMoto;
+        topMoto=aux;
+    }
+    cout << "vehiculo ingresado al parqueadero" << endl;
+    return 0;
+}
+
+int sacarVehiculo() {
+    if (!topCarro && !topMoto) {
+        cout << "el parqueadero está vacio" << endl;
+        return 0;
+    }
+
+    int placa;
+    cout << "digite la placa del vehiculo a sacar: ";
+    cin >> placa;
+
+    Vehiculo *actualCarro=topCarro;
+    Vehiculo *anteriorCarro=NULL;
+    int contadorCarros=0;
+
+    while (actualCarro !=NULL && actualCarro->placa != placa) {
+        anteriorCarro = actualCarro;
+        actualCarro = actualCarro->siguienteCarro;
+        contadorCarros++;
+    }
+
+    Vehiculo *actualMoto = topMoto;
+    Vehiculo *anteriorMoto = NULL;
+    int contadorMotos =0;
+
+    if (actualCarro ==NULL) {
+        while (actualMoto !=NULL && actualMoto->placa != placa) {
+            anteriorMoto = actualMoto;
+            actualMoto = actualMoto->siguienteMoto;
+            contadorMotos++;
+        }
+    }
+
+    if (actualCarro !=NULL) {
+        if (anteriorCarro !=NULL) {
+            anteriorCarro->siguienteCarro = actualCarro->siguienteCarro;
+        } else {
+            topCarro = actualCarro->siguienteCarro;
+        }
+
+        int costoMovimiento = actualCarro->precioMovimiento * contadorCarros;
+        int totalCosto = actualCarro->precioParqueo + costoMovimiento;
+        cout << "moviendo carro " << contadorCarros << " posiciones" << endl;
+        cout << "vehiculo con placa " << placa << " sacado del parqueadero. Total a pagar: " << totalCosto << " pesos" << endl;
+
+        free(actualCarro);
+    } else if (actualMoto != NULL) {
+        if (anteriorMoto != NULL) {
+            anteriorMoto->siguienteMoto = actualMoto->siguienteMoto;
+        } else {
+            topMoto = actualMoto->siguienteMoto;
+        }
+
+        int costoMovimiento = actualMoto->precioMovimiento * contadorMotos;
+        int totalCosto = actualMoto->precioParqueo + costoMovimiento;
+        cout << "moviendo moto " << contadorMotos << " posiciones" << endl;
+        cout << "vehiculo con placa " << placa << " sacado del parqueadero. total a pagar: " << totalCosto << " pesos" << endl;
+        free(actualMoto);
+    } else {
+        cout << "vehiculo no encontrado en el parqueadero" << endl;
+    }
+
+    return 0;
+}
+int mostrarDineroTotal() {
+    if (topCarro ==NULL && topMoto ==NULL) {
+        cout << "el parqueadero está vacío" << endl;
+        return 0;
+    }
+    int totalDineroParqueoCarros=0;
+    int totalDineroParqueoMotos=0;
+    int totalDineroMovimientosCarros=0;
+    int totalDineroMovimientosMotos=0;
+
+    Vehiculo *aux;
+
+    aux = topCarro;
+    while (aux !=NULL) {
+        totalDineroParqueoCarros += aux->precioParqueo;
+        totalDineroMovimientosCarros += aux->precioMovimiento;
+        aux = aux->siguienteCarro;
+    }
+    aux = topMoto;
+    while (aux !=NULL) {
+        totalDineroParqueoMotos += aux->precioParqueo;
+        totalDineroMovimientosMotos += aux->precioMovimiento;
+        aux = aux->siguienteMoto;
+    }
+    cout << "total dinero por parqueo de carros: " << totalDineroParqueoCarros << " pesos." << endl;
+    cout << "total dinero por movimientos de carros: " << totalDineroMovimientosCarros << " pesos." << endl;
+    cout << "total dinero por parqueo de motos: " << totalDineroParqueoMotos << " pesos." << endl;
+    cout << "total dinero por movimientos de motos: " << totalDineroMovimientosMotos << " pesos." << endl;
+
+    return 0;
+}
+int mostrarCarros() {
+    Vehiculo *aux = topCarro;
+    if (aux==NULL) {
+        cout << "no hay carros en el parqueadero" << endl;
+        return 0;
+    }
+
+    cout << "carros en el parqueadero:" << endl;
+    while (aux!=NULL) {
+        cout << "placa: " << aux->placa << endl;
+        aux = aux->siguienteCarro;
+    }
+    return 0;
+}
+int mostrarMotos() {
+    Vehiculo *aux = topMoto;
+    if (aux ==NULL) {
+        cout << "no hay motos en el parqueadero" << endl;
+        return 0;
+    }
+
+    cout << "motos en el parqueadero:" << endl;
+    while (aux !=NULL) {
+        cout << "placa: " << aux->placa << endl;
+        aux = aux->siguienteMoto;
+    }
+    return 0;
+}
+
+int main() {
+    int opcion=0;
+    do {
+        cout << "Menu Parqueadero" << endl;
+        cout << "1. Ingresar vehiculo" << endl;
+        cout << "2. Sacar vehiculo" << endl;
+        cout << "3. Mostrar carros en el parqueadero" << endl;
+        cout << "4. Mostrar motos en el parqueadero" << endl;
+        cout << "5. Mostrar dinero total" << endl;
+        cout << "6. Salir" << endl;
+        cout << "Opcion: ";
+        cin >> opcion;
+
+        switch (opcion) {
+            case 1:
+                ingresarVehiculo();
+                break;
+            case 2:
+                sacarVehiculo();
+                break;
+            case 3:
+                mostrarCarros();
+                break;
+            case 4:
+                mostrarMotos();
+                break;
+            case 5:
+                mostrarDineroTotal();
+                break;
+            case 6:
+                cout << "ssaliendo..." << endl;
+                break;
+            default:
+                cout << "ERROR opcion no disponible" << endl;
+                break;
+        }
+    } while (opcion!=6);
+
+    return 0;
+}
