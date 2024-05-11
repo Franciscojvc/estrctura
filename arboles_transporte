@@ -1,0 +1,280 @@
+#include <iostream>
+#include <conio.h>
+#include <cstring>
+
+using namespace std;
+
+struct empresa {
+    int codigoRNT, anio, mes, dia;
+    char nomEmpresa[45];
+    char categoria[20];
+    empresa *izq, *der;
+};
+
+empresa *raiz, *nuevo, *aux1;
+int conHospedaje=0, conTransporte=0, conGastronomia=0;
+
+void menu();
+int posicionar(empresa *);
+int insertar();
+int recorre(empresa *);
+int eliminar();
+int buspadre(empresa *);
+void contarCategorias();
+void mostrarContadores();
+
+void contarCategorias() {
+    conHospedaje =conTransporte =conGastronomia =0;
+    recorre(raiz);
+}
+
+int main() {
+    raiz = nuevo = aux1= NULL; 
+    menu(); 
+    if (nuevo != NULL) {
+        free(nuevo);
+    }
+    return 0;
+}
+
+void menu() {
+    int opc=0;
+    do {
+        cout << "-----Menu-----" << endl
+            << "1.Registrar empresa" << endl
+            << "2.Mostrar empresas " << endl
+            << "3.Eliminar empresa" << endl
+            << "4.Mostrar numero de empresas por categoria" << endl
+            << "5.Salir" << endl << endl
+            << "opcion: ";
+        cin >> opc;
+
+        switch(opc) {
+        case 1:
+            insertar();
+            system("PAUSE");
+            break;
+        case 2:
+            recorre(raiz);
+            system("PAUSE");
+            break;
+        case 3:
+            eliminar();
+            system("PAUSE");
+            break;
+        case 4:
+            mostrarContadores();
+            system("PAUSE");
+            break;
+        case 5:
+            cout << "Saliendo......" << endl;
+            break;
+        default:
+            cout << "error, opcion no valida" << endl;
+            break;
+        }
+    } while(opc!=5);
+}
+
+int posicionar(empresa *tempo) {
+    if (nuevo->anio < tempo->anio) {
+        if (tempo->izq != NULL) {
+            posicionar(tempo->izq);
+        } else {
+            tempo->izq = nuevo;
+        }
+    } else if (nuevo->anio > tempo->anio) {
+        if (tempo->der != NULL) {
+            posicionar(tempo->der);
+        } else {
+            tempo->der = nuevo;
+        }
+    } else {
+        // Mismo anio, compara meses
+        if (nuevo->mes < tempo->mes) {
+            if (tempo->izq != NULL) {
+                posicionar(tempo->izq);
+            } else {
+                tempo->izq = nuevo;
+            }
+        } else if (nuevo->mes > tempo->mes) {
+            if (tempo->der != NULL) {
+                posicionar(tempo->der);
+            } else {
+                tempo->der = nuevo;
+            }
+        } else {
+            // Mismo mes, compara dias
+            if (nuevo->dia < tempo->dia) {
+                if (tempo->izq != NULL) {
+                    posicionar(tempo->izq);
+                } else {
+                    tempo->izq = nuevo;
+                }
+            } else if (nuevo->dia > tempo->dia) {
+                if (tempo->der != NULL) {
+                    posicionar(tempo->der);
+                } else {
+                    tempo->der = nuevo;
+                }
+            } else {
+                // La fecha es igual, manejar segun criterio
+            }
+        }
+    }
+    return 0;
+}
+
+int insertar() {
+
+    nuevo = (empresa*)malloc(sizeof(empresa));
+    nuevo->izq = nuevo->der = NULL;
+    cout << "Ingrese el nombre de la empresa: ";
+    cin >> nuevo->nomEmpresa;
+    cout << "Ingrese el codigo RNT: ";
+    cin >> nuevo->codigoRNT;
+    cout << "Seleccione la categoria a la que pertenece (1. hospedaje, 2. transporte, 3. gastronomia): ";
+    int opcategoria;
+    cin >> opcategoria;
+    switch (opcategoria) {
+       case 1:
+            strcpy(nuevo->categoria, "hospedaje");
+            conHospedaje++;
+            break;
+        case 2:
+            strcpy(nuevo->categoria, "transporte");
+            conTransporte++;
+            break;
+        case 3:
+            strcpy(nuevo->categoria, "gastronomia");
+            conGastronomia++;
+            break;
+        default:
+            cout << "opcion no valida" << endl;
+            break;
+    }
+    cout << "Ingrese el anio: ";
+    cin >> nuevo->anio;
+    cout << "Ingrese el mes: ";
+    cin >> nuevo->mes;
+    cout << "Ingrese el dia: ";
+    cin >> nuevo->dia;
+
+    if (!raiz) {
+        raiz = nuevo;
+    } else {
+        posicionar(raiz);
+    }
+    return 0;
+}
+
+int recorre(empresa *itera) {
+    if (!itera) {
+        cout << "No hay empresas registradas" << endl;
+    } else {
+        cout << "Nombre de la empresa: " << itera->nomEmpresa << endl;
+        cout << "Categoria: " << itera->categoria << endl;
+        cout << "Codigo RNT: " << itera->codigoRNT << endl;
+        cout << "Fecha de registro: " << itera->anio << "/" << itera->mes << "/" << itera->dia << endl;
+        cout << "--------------------------------" << endl;
+        if (itera->izq != NULL) {
+            recorre(itera->izq);
+        }
+        if (itera->der != NULL) {
+            recorre(itera->der);
+        }
+    }
+    return 0;
+}
+
+int buspadre(empresa *itera) {
+    if ((itera->izq != NULL) && (itera->izq != nuevo)) {
+        buspadre(itera->izq);
+    }
+    if (itera->izq == nuevo) {
+        aux1 = itera;
+    }
+    if ((itera->der != NULL) && (itera->der != nuevo)) {
+        buspadre(itera->der);
+    }
+    if (itera->der == nuevo) {
+        aux1 = itera;
+    }
+    return 0;
+}
+
+int eliminar() {
+    int codigo;
+
+    cout << "ingrese el codigo RNT de la empresa a eliminar: "<<endl;
+    cin >> codigo;
+
+    empresa *temp = raiz;
+    empresa *padre = NULL;
+    while (temp != NULL && temp->codigoRNT != codigo) {
+        padre = temp;
+        if (codigo < temp->codigoRNT) {
+            temp = temp->izq;
+        } else {
+            temp = temp->der;
+        }
+    }
+
+    if (temp == NULL) {
+        cout << "La empresa con el codigo RNT " << codigo << " no fue encontrada." << endl;
+        return 0;
+    }
+
+    // Si la empresa tiene dos hijos
+    if (temp->izq != NULL && temp->der != NULL) {
+        // Encontrar el sucesor
+        empresa *sucesor = temp->der;
+        padre = temp;
+        while (sucesor->izq != NULL) {
+            padre = sucesor;
+            sucesor = sucesor->izq;
+        }
+
+        // Copiar los datos del sucesor al nodo a eliminar
+        temp->codigoRNT = sucesor->codigoRNT;
+        temp->anio = sucesor->anio;
+        temp->mes = sucesor->mes;
+        temp->dia = sucesor->dia;
+        
+        // Eliminar el sucesor
+        if (padre->izq == sucesor) {
+            padre->izq = sucesor->der;
+        } else {
+            padre->der = sucesor->der;
+        }
+        free(sucesor);
+    } else {
+        // Si la empresa tiene un hijo o no
+        empresa *hijo = (temp->izq != NULL) ? temp->izq : temp->der;
+        // Si el nodo a eliminar es la raiz
+        if (padre == NULL) {
+            raiz = hijo;
+        } else {
+            // Si el nodo a eliminar es hijo izquierdo o derecho del padre
+            if (temp == padre->izq) {
+                padre->izq = hijo;
+            } else {
+                padre->der = hijo;
+            }
+        }
+        free(temp);
+    }
+
+    // Actualizar los contadores de categorías
+    contarCategorias();
+
+    cout << "Empresa eliminada correctamente." << endl;
+    return 0;
+}
+
+void mostrarContadores() {
+    cout << "Numero de empresas por categoria:" << endl;
+    cout << "Hospedaje: " << conHospedaje << endl;
+    cout << "Transporte: " << conTransporte << endl;
+    cout << "Gastronomia: " << conGastronomia << endl;
+}
