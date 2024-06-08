@@ -1,0 +1,387 @@
+#include <iostream>
+#include <malloc.h>
+#include <cstring>
+
+using namespace std;
+
+struct pasajero {
+    char nombre[40];
+    pasajero* sig;
+};
+pasajero* nuevo;
+
+struct Embarcacion {
+    int matricula;
+    char destino[50];
+    float precio;
+    char nombreEm[20];
+    int dia;
+    int mes;
+    int anio; 
+    int capacidad;
+    int identificador;
+    Embarcacion* izq;
+    Embarcacion* der;
+    pasajero* cabeza;
+    pasajero* cola;
+    int altura;
+    int numPasajeros;
+};
+Embarcacion* raiz, * aux;
+
+int obtenerAltura(struct Embarcacion* n) {
+    if (n == NULL) {
+        return 0;
+    }
+    return n->altura;
+}
+
+int mayor(int a, int b) {
+    return (a > b) ? a : b;
+}
+
+int obtenerBalance(struct Embarcacion* n) {
+    if (n == NULL) {
+        return 0;
+    }
+    return obtenerAltura(n->izq) - obtenerAltura(n->der);
+}
+
+struct Embarcacion* rotarDerecha(struct Embarcacion* y) {
+    struct Embarcacion* x = y->izq;
+    struct Embarcacion* T2 = x->der;
+
+    x->der = y;
+    y->izq = T2;
+
+    y->altura = mayor(obtenerAltura(y->izq), obtenerAltura(y->der)) + 1;
+    x->altura = mayor(obtenerAltura(x->izq), obtenerAltura(x->der)) + 1;
+
+    return x;
+}
+
+struct Embarcacion* rotarIzquierda(struct Embarcacion* x) {
+    struct Embarcacion* y = x->der;
+    struct Embarcacion* T2 = y->izq;
+
+    y->izq = x;
+    x->der = T2;
+
+    x->altura = mayor(obtenerAltura(x->izq), obtenerAltura(x->der)) + 1;
+    y->altura = mayor(obtenerAltura(y->izq), obtenerAltura(y->der)) + 1;
+
+    return y;
+}
+
+struct Embarcacion* insertar(struct Embarcacion* nodo) {
+    if (nodo == NULL) {
+        return aux;
+    }
+
+    if (aux->identificador < nodo->identificador) {
+        nodo->izq = insertar(nodo->izq);
+    } else if (aux->identificador > nodo->identificador) {
+        nodo->der = insertar(nodo->der);
+    } else {
+        return nodo;
+    }
+
+    nodo->altura = 1 + mayor(obtenerAltura(nodo->izq), obtenerAltura(nodo->der));
+
+    int balance = obtenerBalance(nodo);
+
+    if (balance > 1 && aux->identificador < nodo->izq->identificador) {
+        return rotarDerecha(nodo);
+    }
+
+    if (balance < -1 && aux->identificador > nodo->der->identificador) {
+        return rotarIzquierda(nodo);
+    }
+
+    if (balance > 1 && aux->identificador > nodo->izq->identificador) {
+        nodo->izq = rotarIzquierda(nodo->izq);
+        return rotarDerecha(nodo);
+    }
+
+    if (balance < -1 && aux->identificador < nodo->der->identificador) {
+        nodo->der = rotarDerecha(nodo->der);
+        return rotarIzquierda(nodo);
+    }
+
+    return nodo;
+}
+
+struct Embarcacion* buscarEM(struct Embarcacion* nodo, int IDbusqueda) {
+    if (nodo == NULL || nodo->identificador == IDbusqueda) {
+        return nodo;
+    }
+
+    if (IDbusqueda < nodo->identificador) {
+        return buscarEM(nodo->izq, IDbusqueda);
+    } else {
+        return buscarEM(nodo->der, IDbusqueda);
+    }
+}
+
+int registrarEM() {
+    aux = (struct Embarcacion*)malloc(sizeof(struct Embarcacion));
+    cout<<"ingrese la matricula de la embarcacion: ";
+    cin>>aux->matricula;
+    cout<<"ingrese el nombre de la embarcacion: ";
+    cin>>aux->nombreEm;
+    cout<<"ingrese el destino del viaje: ";
+    cin>>aux->destino;
+    cout<<"ingrese el precio del viaje: ";
+    cin>>aux->precio;
+    cout<<"ingrese el dia de salida: ";
+    cin>>aux->dia;
+    cout<<"ingrese el mes de salida: ";
+    cin>>aux->mes;
+    cout<<"ingrese el anio de salida: ";
+    cin>>aux->anio;
+    cout<<"ingrese la capacidad de la Embarcacion: ";
+    cin>>aux->capacidad;
+    cout<<"Ingrese el identificador: ";
+    cin>>aux->identificador;
+    aux->izq = NULL;
+    aux->der = NULL;
+    aux->altura = 1;
+    aux->cabeza = NULL;
+    aux->cola = NULL;
+    aux->numPasajeros = 0;
+    raiz = insertar(raiz);
+    return 0;
+}
+
+void mostrar(Embarcacion *arbol, int con) {
+    if (arbol == NULL) {
+        cout<<"error: arbol vacio"<<endl;
+    } else {
+        if (arbol->der != NULL) {
+            mostrar(arbol->der, con + 1);
+        }
+
+        for (int i = 0; i < con * 4; i++) {
+            cout << " ";
+        }
+        cout << arbol->identificador << endl;
+
+        if (arbol->izq != NULL) {
+            mostrar(arbol->izq, con + 1);
+        }
+    }
+}
+
+void registrarPA(struct Embarcacion* viaje) {
+    int IDbusqueda;
+    cout<<"ingrese el identificador de la Embarcacion: ";
+    cin>>IDbusqueda;
+
+    struct Embarcacion* resultado = buscarEM(raiz, IDbusqueda);
+    if (resultado == NULL) {
+        cout << "Embarcacion no encontrada." << endl;
+        return;
+    }
+
+    if (resultado->numPasajeros >= resultado->capacidad) {
+        cout << "La Embarcacion alcanzo su capacidad maxima." << endl;
+        return;
+    }
+
+    nuevo = (struct pasajero*)malloc(sizeof(struct pasajero));
+    cout << "Ingrese el nombre del pasajero: ";
+    cin >> nuevo->nombre;
+    nuevo->sig = NULL;
+
+    if (resultado->cabeza== NULL) {
+        resultado->cabeza =nuevo;
+        resultado->cola =nuevo;
+    } else {
+        resultado->cola->sig= nuevo;
+        resultado->cola =nuevo;
+    }
+
+    resultado->numPasajeros++;
+    cout<<"Pasajero registrado exitosamente."<<endl;
+}
+
+void mostrarPA() {
+    int IDbusqueda;
+    cout << "Ingrese el identificador de la Embarcacion: ";
+    cin >> IDbusqueda;
+    struct Embarcacion* resultado = buscarEM(raiz, IDbusqueda);
+    if (resultado != NULL) {
+        if (resultado->cabeza == NULL) {
+            cout << "No hay pasajeros registrados en este viaje." << endl;
+            return;
+        }
+
+        pasajero* temp = resultado->cabeza;
+        int count = 1;
+        while (temp != NULL) {
+            cout << count << ". " << temp->nombre << endl;
+            temp = temp->sig;
+            count++;
+        }
+    } else {
+        cout << "embarcacion no encontrada." << endl;
+    }
+}
+
+struct Embarcacion* minValorNodo(struct Embarcacion* nodo) {
+    struct Embarcacion* actual = nodo;
+
+    while (actual->izq != NULL)
+        actual = actual->izq;
+
+    return actual;
+}
+
+struct Embarcacion* eliminar(struct Embarcacion* raiz, int identificador) {
+    if (raiz == NULL)
+        return raiz;
+
+    if (identificador < raiz->identificador)
+        raiz->izq = eliminar(raiz->izq, identificador);
+    else if (identificador > raiz->identificador)
+        raiz->der = eliminar(raiz->der, identificador);
+    else {
+        if ((raiz->izq == NULL) || (raiz->der == NULL)) {
+            struct Embarcacion* temp = raiz->izq ? raiz->izq : raiz->der;
+
+            if (temp == NULL) {
+                temp = raiz;
+                raiz = NULL;
+            } else
+                *raiz = *temp;
+
+            free(temp);
+            cout<<"Embarcacion eliminada."<<endl;
+        } else {
+            struct Embarcacion* temp = minValorNodo(raiz->der);
+            raiz->identificador = temp->identificador;
+            strcpy(raiz->nombreEm, temp->nombreEm);
+            raiz->dia = temp->dia;
+            raiz->mes = temp->mes;
+            raiz->anio = temp->anio;
+            strcpy(raiz->destino, temp->destino);
+            raiz->capacidad = temp->capacidad;
+            raiz->matricula = temp->matricula;
+            raiz->precio = temp->precio;
+            raiz->cabeza = temp->cabeza;
+            raiz->cola = temp->cola;
+            raiz->numPasajeros = temp->numPasajeros;
+
+            raiz->der = eliminar(raiz->der, temp->identificador);
+           
+        }
+    }
+
+    if (raiz == NULL)
+        return raiz;
+
+    raiz->altura = 1 + mayor(obtenerAltura(raiz->izq), obtenerAltura(raiz->der));
+
+    int balance = obtenerBalance(raiz);
+
+    if (balance > 1 && obtenerBalance(raiz->izq) >= 0)
+        return rotarDerecha(raiz);
+
+    if (balance > 1 && obtenerBalance(raiz->izq) < 0) {
+        raiz->izq = rotarIzquierda(raiz->izq);
+        return rotarDerecha(raiz);
+    }
+
+    if (balance < -1 && obtenerBalance(raiz->der) <= 0)
+        return rotarIzquierda(raiz);
+
+    if (balance < -1 && obtenerBalance(raiz->der) > 0) {
+        raiz->der = rotarDerecha(raiz->der);
+        return rotarIzquierda(raiz);
+    }
+
+    return raiz;
+}
+
+void inOrden(struct Embarcacion* nodo) {
+    if (nodo != NULL) {
+        inOrden(nodo->izq);
+        cout<<"Nombre: "<<nodo->nombreEm<<" Identificador: "<<nodo->identificador<<endl;
+        inOrden(nodo->der);
+    }
+}
+void mostrarEM() {
+    cout<<"Inorden: " << endl;
+    inOrden(raiz);
+    cout << endl;
+}
+void buscarEM() {
+    int IDbusqueda;
+    cout<<"Ingrese el identificador de la Embarcacion a buscar: ";
+    cin>>IDbusqueda;
+    struct Embarcacion* resultado = buscarEM(raiz, IDbusqueda);
+    if (resultado != NULL) {
+        cout<<"Datos de la Embarcacion encontrada:"<<endl;
+        cout<<"Matricula: "<<resultado->matricula<<endl;
+        cout<<"Nombre: "<<resultado->nombreEm<<endl;
+        cout<<"Destino: "<<resultado->destino<<endl;
+        cout<<"Precio: "<<resultado->precio << endl;
+        cout<<"Fecha: "<<resultado->dia<<"/"<<resultado->mes<<"/"<<resultado->anio<<endl;
+        cout<<"Capacidad: "<<resultado->capacidad<<endl;
+        cout<<"Identificador: "<<resultado->identificador<<endl;
+    } else {
+        cout << "Embarcacion no encontrada."<<endl;
+    }
+}
+
+void eliminarViaje() {
+    int IDbusqueda;
+    cout<<"Ingrese el identificador del viaje a eliminar: ";
+    cin>>IDbusqueda;
+    raiz = eliminar(raiz, IDbusqueda);
+}
+void mostrarArbol() {
+    mostrar(raiz, 0);
+}
+
+int main() {
+    raiz = NULL;
+    int opc = 0;
+    
+    do {
+        cout<<"Menu de opciones"<<endl;
+        cout<<"1. Registrar una Embarcacion"<<endl;
+        cout<<"2. Buscar Embarcacion por identificador "<<endl;
+        cout<<"3. Mostrar las embarcaciones"<<endl;
+        cout<<"4. Eliminar embarcacion"<<endl;
+        cout<<"5. Registrar pasajeros en una Embarcacion"<<endl;
+        cout<<"6. mostrar pasajeros de una Embarcacion"<<endl;
+        cout<<"7. mostrar arbol"<<endl;
+        cout<<"8. Salir"<<endl;
+        cin>>opc;
+        switch (opc) {
+        case 1:
+            registrarEM();
+            break;
+        case 2:
+             buscarEM();
+            break;
+        case 3:
+           mostrarEM();
+            break;
+        case 4:
+           eliminarViaje();
+            break;
+        case 5:
+            registrarPA(raiz);
+            break;
+        case 6:
+            mostrarPA();
+            break;
+        case 7:
+            mostrarArbol();
+            break;
+        }
+    } while (opc != 8);
+    return 0;
+}
